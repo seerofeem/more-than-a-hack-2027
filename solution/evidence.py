@@ -86,13 +86,15 @@ def build(feat, events, blocks, fps=P.FPS):
 
     signs = team_code_signs(events, control)
     goals = sorted(ev["stop"] for ev in events if ev["code"] == "goals")
+    # Overlapping phases must not stack into a strong signal: one net vote per frame.
+    vote = np.zeros(n)
     for ev in events:
         start, stop = max(ev["start"], 0), min(ev["stop"], n)
         if start >= stop:
             continue
         if ev["code"] in signs and ev["side"] is not None:
             side = ev["side"] if signs[ev["code"]] > 0 else 1 - ev["side"]
-            scores[start:stop, side] += P.K_TAG_TEAM
+            vote[start:stop] += 1.0 if side == H else -1.0
         if ev["code"] == "set pieces":
             scores[start:(start + stop) // 2 + 1, D] += P.K_TAG_SETPIECE
             if ev["type"].startswith("kick off"):
@@ -105,5 +107,7 @@ def build(feat, events, blocks, fps=P.FPS):
                               and start - g <= P.GOAL_TO_KICKOFF_MAX_S * fps]
                     if before:
                         scores[before[-1]:start, D] += P.K_TAG_GOAL
+    scores[:, H] += P.K_TAG_TEAM * (vote > 0)
+    scores[:, A] += P.K_TAG_TEAM * (vote < 0)
 
-    return scores, {"tag_code_signs": signs}
+    return scores, {"tag_code_signs": signs, "live": live}

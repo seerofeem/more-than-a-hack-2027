@@ -57,6 +57,17 @@ def report(labels, feat, blocks, diag, events, fps):
     print("tag code -> Team names the side {}".format(
         ", ".join("{}={}".format(c, "in possession" if s > 0 else "defending")
                   for c, s in sorted(diag["tag_code_signs"].items()))))
+    # How often each cue fires on graded frames. A cue at ~0% or ~100% is broken, not informative.
+    cues = {"out_of_bounds": feat["out_of_bounds"], "edge_missing": feat["edge_missing"],
+            "long_stationary": feat["long_stationary"], "formation": feat["formation"],
+            "live": diag["live"]}
+    print("cue rates on graded frames: " + "  ".join(
+        "{} {:.2f}%".format(k, 100 * np.mean(v[graded])) for k, v in cues.items()))
+    switches = np.flatnonzero((labels[1:] != labels[:-1]) & graded[1:] & graded[:-1]
+                              & np.isin(labels[1:], ("H", "A")) & np.isin(labels[:-1], ("H", "A"))) + 1
+    if len(switches):
+        print("H<->A switches: {}, {:.1f}% of them on ball-missing frames".format(
+            len(switches), 100 * np.mean(~feat["visible"][switches])))
     for half, (start, stop) in enumerate(blocks, 1):
         window = labels[start:stop]
         breaks = np.flatnonzero(window[1:] != window[:-1]) + 1

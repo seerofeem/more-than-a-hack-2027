@@ -52,11 +52,17 @@ def compute(players, ball, team, pitch, fps=P.FPS):
     d_home = np.where(team[None, :] == HOME, dist, np.inf).min(axis=1)
     d_away = np.where(team[None, :] == AWAY, dist, np.inf).min(axis=1)
 
-    # Ball speed from consecutive visible frames, lightly smoothed.
-    step = np.full(n, np.nan)
-    both = visible[1:] & visible[:-1]
-    step[1:][both] = np.hypot(np.diff(bx)[both], np.diff(by)[both]) * fps
-    ball_speed = rolling_nanmean(step, 2)
+    # Ball speed as net displacement of a smoothed position over ~0.5 s. Frame-to-frame
+    # differences would be dominated by tracking jitter and never read "stationary".
+    half_span = max(1, int(round(0.25 * fps)))
+    sx = rolling_nanmean(np.where(visible, bx, np.nan), 2)
+    sy = rolling_nanmean(np.where(visible, by, np.nan), 2)
+    ball_speed = np.full(n, np.nan)
+    if n > 2 * half_span:
+        moved = np.hypot(sx[2 * half_span:] - sx[:-2 * half_span],
+                         sy[2 * half_span:] - sy[:-2 * half_span])
+        ball_speed[half_span:n - half_span] = moved * fps / (2 * half_span)
+    ball_speed[~visible] = np.nan
 
     out_of_bounds = visible & ((bx < -P.OUT_MARGIN_M) | (bx > length + P.OUT_MARGIN_M) |
                                (by < -P.OUT_MARGIN_M) | (by > width + P.OUT_MARGIN_M))

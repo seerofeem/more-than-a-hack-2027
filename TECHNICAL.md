@@ -55,12 +55,15 @@ All distances are in metres (normalised coordinates × 105.3 × 68.0). All param
 - Visible, in bounds and moving faster than 1 m/s: against `D`.
 - **Tempo** is the mean player speed over a ±1 s window. It is calibrated per half on that half's own
   20th and 60th percentiles, which needs no labels. Slow play pushes towards `D`, fast play away from it.
+- Ball speed is the net displacement of a smoothed ball position over ~0.5 s, so tracking jitter
+  does not read as movement.
 - Ball standing still for 2 s or more while the game is slow: `D` (set-piece setup).
 - **Kick-off formation**: ball within 2 m of the centre spot, with each team entirely in its own half:
   strong `D`.
 
 ### 3.3 Smart Tagging (weak prior)
-- **Team-tagged phases** add a small bonus (0.2 per frame) to one side. For each code, the data
+- **Team-tagged phases** add a small bonus (0.2 per frame) to one side. Overlapping phases are
+  combined into one net vote per frame, so they cannot stack into a strong signal. For each code, the data
   decides whether `Team` names the side in possession or the defending side. The rule is agreement with
   the proximity evidence inside that code's intervals, which needs no labels. The run prints the
   decision for each code.
@@ -84,8 +87,8 @@ All distances are in metres (normalised coordinates × 105.3 × 68.0). All param
 ## 4. Training data
 
 **None.** No labelled data of any kind was used, from this game or any other. No parameter was fitted
-to labels. The public 5-minute ground truth was used only to check frame alignment and label meaning.
-It was never used to choose between parameter values.
+to labels. The public 5-minute ground truth may be used only to check frame alignment and label meaning. It is
+never used to choose between parameter values.
 
 ## 5. Validation without labels
 
@@ -93,9 +96,10 @@ It was never used to choose between parameter values.
   text + metadata XML + SportsCode XML), with a known ground truth. It tests parsing, the frame
   alignment (`video_frame = frame_id - 1`), the halves and the file format end to end. It is not a
   benchmark, because the generator and the model share assumptions.
-- The run prints label-free diagnostics: share of H/A/D, number and mean length of possessions per
-  half, and the Smart Tagging sign decisions. These are the sanity check against football common
-  sense: roughly 150–200 possessions per half, mean around 10–15 s.
+- The run prints label-free diagnostics: the share of H/A/D, the number and mean length of
+  possessions per half, the Smart Tagging sign decisions, and how often each cue fires on graded
+  frames. A cue firing on ~0% or ~100% of frames is a bug, not a signal. These checks catch broken
+  wiring. They are not targets to tune towards.
 - The output is byte-identical across runs. There is no randomness, and the parse cache does not
   change the result.
 
