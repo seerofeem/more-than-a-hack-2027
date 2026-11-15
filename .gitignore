@@ -67,3 +67,4 @@ env/
 # Data bundles arrive as zips; never commit one. Generated submissions are reproducible from code.
 *.zip
 submissions/
+/More Than A Hack 2027*/

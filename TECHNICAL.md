@@ -103,6 +103,18 @@ never used to choose between parameter values.
 - The output is byte-identical across runs. There is no randomness, and the parse cache does not
   change the result.
 
+### Single pipeline check on real data
+
+Run once on the delivered data, with no parameter changed afterwards:
+- Ball visible on 59.3% of graded frames, which matches DATA.md, so the frame alignment is correct.
+- The Smart Tagging signs were resolved without labels. Every "defending in ..." code and
+  "defensive transition" came out as naming the defending side; every attacking code came out as
+  naming the side in possession. This is what the code names say, so it confirms the team mapping.
+- Public 5-minute window, scored once as a correctness check: macroF1 0.68, spellF1 0.42, and 21
+  predicted possessions against 17 true. The published floor `baseline_smooth50` scores 0.62 / 0.33
+  on the same window. With 17 possessions this window cannot rank anything; it only shows the
+  labels mean what we think.
+
 ## 6. Limitations and future work
 
 - **Long ball occlusions in crowded areas** (boxes, aerial duels). With no ball, there's no control
