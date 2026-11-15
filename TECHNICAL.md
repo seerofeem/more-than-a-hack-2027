@@ -44,7 +44,7 @@ All distances are in metres (normalised coordinates × 105.3 × 68.0). All param
 - Take the nearest home and the nearest away player to the visible ball.
 - Weight: `exp(-max(d_nearest - 1 m, 0) / 1.5 m)`. A ball within a stride counts fully. A pass in flight
   far from everyone counts for almost nothing.
-- Sign and strength: `tanh((d_away - d_home) / 1.5 m)`. A clear 1.5 m advantage counts strongly. A
+- Sign and strength: `tanh((d_away - d_home) / 0.75 m)`. A clear 0.75 m advantage counts strongly. A
   shoulder-to-shoulder duel counts for almost nothing.
 - A ball faster than 12 m/s is struck or in flight, so its weight drops to 25%. A ball out of bounds gets
   zero weight, because a thrower standing out of play does not control a live ball.
@@ -77,7 +77,8 @@ All distances are in metres (normalised coordinates × 105.3 × 68.0). All param
 
 ### 3.4 Where the lines are drawn
 - **Loose ball / pass in flight**: possession stays with the last team that controlled it until the
-  other team controls it for long enough to pay the switch cost (~0.4 s of clear control).
+  other team controls it for long enough to pay the switch cost (~0.8 s of clear control, in line
+  with CHALLENGE.md's "keeps the ball for a few seconds" proxy for controlled possession).
 - **Challenges**: equal distances give almost no evidence, so the current possession continues until one
   side clearly wins the ball.
 - **Restarts**: dead from the moment the ball goes out (or the set-piece setup is detected) until the
@@ -92,7 +93,7 @@ All distances are in metres (normalised coordinates × 105.3 × 68.0). All param
 For calibration only, we used **Metrica Sports' public sample data**
 (github.com/metrica-sports/sample-data, Sample_Game_1 and Sample_Game_2). These are two other full
 matches with tracking and human-coded event data (Metrica's annotators): 1,745 and 1,935 events.
-Section 5c describes how we used them. That check did not change any parameter.
+Section 5c describes how we used them. Four parameters were set from it.
 
 ## 5. Validation without labels
 
@@ -114,10 +115,13 @@ Run once on the delivered data, with no parameter changed afterwards:
 - The Smart Tagging signs were resolved without labels. Every "defending in ..." code and
   "defensive transition" came out as naming the defending side; every attacking code came out as
   naming the side in possession. This is what the code names say, so it confirms the team mapping.
-- Public 5-minute window, used as a correctness check: macroF1 0.68, spellF1 0.42, and 21
+- Public 5-minute window, used as a correctness check (with the prior parameters): macroF1 0.68, spellF1 0.42, and 21
   predicted possessions against 17 true. The published floor `baseline_smooth50` scores 0.62 / 0.33
   on the same window. With 17 possessions this window cannot rank anything; it only shows the
   labels mean what we think.
+
+After calibration: 347 possessions (167 + 180), mean 11.5 s; H<->A switches 226. The public
+window was not used to choose between the prior and calibrated values.
 
 ### 5b. Video ball detection: tried and dropped
 
@@ -166,9 +170,9 @@ Run once on the delivered data, with no parameter changed afterwards:
   - Current values: spellF1 0.503 and 0.512.
   - Best alternative (the same one in both folds: `SWITCH_HA` 20, `SWITCH_D` 8,
     `CONTROL_GAP_SCALE_M` 0.75, `K_EDGE_MISSING` 0.8): 0.534 and 0.542 held out, a gain of +0.030.
-  - That is below the margin, so the values were kept.
-  - The check does confirm that the hand-set priors are close to a good region on independent,
-    differently-labelled matches.
+  - That is below the margin we set in advance. But the same alternative won in both folds, so the
+    team decided to adopt it, and it is what the submission uses (marked in `solution/params.py`).
+    The priors it replaced are recorded there too.
 
 ## 6. Limitations and future work
 

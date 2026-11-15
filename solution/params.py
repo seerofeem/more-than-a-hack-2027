@@ -1,6 +1,7 @@
 """Every tunable number in the pipeline, in one place, with where it comes from.
 
-None of these was fitted to labels of the provided game. They are physical or football priors
+None of these was fitted to labels of the provided game. Four values (marked) were calibrated on
+other matches -- Metrica's public sample games -- with solution/calibrate.py; the rest are priors. They are physical or football priors
 (distances in metres, durations in seconds) or self-calibrating quantiles of label-free signals.
 The public 5-minute ground truth was used only to check that the pipeline is aligned and that the
 labels mean what we think -- never to pick between values below. See TECHNICAL.md.
@@ -15,7 +16,7 @@ CONTROL_RADIUS_M = 1.0
 CONTROL_DECAY_M = 1.5
 # How decisive the gap between the nearest home and nearest away player is. A 1.5 m advantage
 # gives tanh(1) = 0.76 of full weight; a shoulder-to-shoulder duel gives close to nothing.
-CONTROL_GAP_SCALE_M = 1.5
+CONTROL_GAP_SCALE_M = 0.75   # calibrated on Metrica sample games (calibrate.py); prior was 1.5
 # Ball faster than this is struck / in flight: nobody is controlling it on that frame, so the
 # proximity term is down-weighted (a player it flies past has not won it).
 BALL_FLIGHT_SPEED_MS = 12.0
@@ -29,7 +30,7 @@ OUT_MARGIN_M = 0.5
 K_OUT = 2.0
 # Ball lost by the tracker while at / beyond a line: it most likely left the pitch.
 EDGE_MARGIN_M = 1.5
-K_EDGE_MISSING = 0.4
+K_EDGE_MISSING = 0.8   # calibrated (calibrate.py); prior was 0.4
 # Visible, in-bounds, moving ball: play is live.
 BALL_MOVING_MS = 1.0
 K_ALIVE = 0.3
@@ -64,8 +65,8 @@ K_TAG_GOAL = 2.0
 # --- segmentation ------------------------------------------------------------------------------
 # Viterbi switch costs, in the same units as the per-frame scores. H<->A needs ~0.4 s of clear
 # control by the other side; entering or leaving D needs a little more.
-SWITCH_HA = 10.0
-SWITCH_D = 15.0
+SWITCH_HA = 20.0   # calibrated (calibrate.py); prior was 10
+SWITCH_D = 8.0     # calibrated (calibrate.py); prior was 15
 # Clean-up after Viterbi.
 MIN_SPELL_S = 0.5          # shorter H/A spells are absorbed by what came before
 MIN_DEAD_S = 1.0           # shorter D gaps inside one team's spell are closed
