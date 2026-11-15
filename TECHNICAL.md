@@ -87,9 +87,12 @@ All distances are in metres (normalised coordinates × 105.3 × 68.0). All param
 
 ## 4. Training data
 
-**None.** No labelled data of any kind was used, from this game or any other. No parameter was fitted
-to labels. The public 5-minute ground truth may be used only to check frame alignment and label meaning. It is
-never used to choose between parameter values.
+**No labels from the provided game, and no learned weights.**
+
+For calibration only, we used **Metrica Sports' public sample data**
+(github.com/metrica-sports/sample-data, Sample_Game_1 and Sample_Game_2). These are two other full
+matches with tracking and human-coded event data (Metrica's annotators): 1,745 and 1,935 events.
+Section 5c describes how we used them. That check did not change any parameter.
 
 ## 5. Validation without labels
 
@@ -143,6 +146,29 @@ Run once on the delivered data, with no parameter changed afterwards:
 
   Run it with `python -m solution.video_ball`, then `python -m solution.run --video`. The dependencies
   are in `requirements-video.txt`.
+
+### 5c. Calibration on other matches (Metrica sample data)
+
+`solution/calibrate.py` reproduces this.
+- **Ground truth from events, by our own mechanical rule.**
+  - Possession is the team of the latest PASS, RECOVERY, SET PIECE, SHOT or BALL LOST event, so a
+    loose ball stays with the last team, as CHALLENGE.md specifies.
+  - Dead ball runs from a stoppage trigger (ball out, foul, goal or shot out, offside or hand ball)
+    to the next SET PIECE, and covers the time before each kick-off.
+  - This gives 378 and 353 possessions.
+- **Tracking degraded to look like the ATD.** Ball visible on 59% of frames (missing in runs of mean
+  1.6 s), 0.15 m player jitter and 0.3 m ball jitter, and players dropping out in runs. Seeded.
+- **Grid:** 486 combinations of `SWITCH_HA`, `SWITCH_D`, `MIN_SPELL_S`, `CONTROL_GAP_SCALE_M`,
+  `K_TEMPO` and `K_EDGE_MISSING`. We chose on one game, scored on the other, then swapped.
+- **Rule fixed before running:** replace the current values only if the mean held-out spellF1 gain
+  exceeds 0.04.
+- **Result:**
+  - Current values: spellF1 0.503 and 0.512.
+  - Best alternative (the same one in both folds: `SWITCH_HA` 20, `SWITCH_D` 8,
+    `CONTROL_GAP_SCALE_M` 0.75, `K_EDGE_MISSING` 0.8): 0.534 and 0.542 held out, a gain of +0.030.
+  - That is below the margin, so the values were kept.
+  - The check does confirm that the hand-set priors are close to a good region on independent,
+    differently-labelled matches.
 
 ## 6. Limitations and future work
 
