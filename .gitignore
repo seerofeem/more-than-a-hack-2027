@@ -62,3 +62,8 @@ __pycache__/
 venv/
 env/
 .DS_Store
+
+# -- solution ----------------------------------------------------------------------------------
+# Data bundles arrive as zips; never commit one. Generated submissions are reproducible from code.
+*.zip
+submissions/

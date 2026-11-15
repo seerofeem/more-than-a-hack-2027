@@ -1,0 +1,4 @@
+# Exact environment the submission was generated with (Python 3.11.5).
+# The solution needs nothing beyond what the official scorer needs.
+numpy==2.4.6
+pandas==3.0.6

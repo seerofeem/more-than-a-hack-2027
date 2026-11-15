@@ -1,3 +1,21 @@
+# Our submission
+
+This repository is the challenge repository plus our solution in `solution/`.
+
+```bash
+pip install -r requirements-solution.txt      # numpy==2.4.6, pandas==3.0.6 (Python 3.11)
+# unpack the gated data bundle into ./data   (see DATA.md) -- it is gitignored
+python -m solution.run --team <team_name>     # -> submissions/<team_name>.csv, validated
+```
+
+Method, assets, possession rules and limitations: [TECHNICAL.md](TECHNICAL.md).
+Plumbing test without the data: `python tests/make_synthetic.py <dir>` then
+`python -m solution.run --data-dir <dir> --team synthetic --no-copy`.
+
+No match data is committed.
+
+---
+
 # More than a Hack 2027 — Phase 1: Ball Possession
 
 **Organised by [Metrica Sports](https://metrica-sports.com), [FC Barcelona](https://www.fcbarcelona.com)
