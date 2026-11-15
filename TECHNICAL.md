@@ -1,6 +1,6 @@
 # Ball possession from tracking: evidence + switch-cost segmentation
 
-Technical document for More than a Hack 2027, Phase 1. Rename to `<team_name>.md` before you upload it.
+Technical document for More than a Hack 2027, Phase 1. Team AID.
 
 ## 1. Approach
 
