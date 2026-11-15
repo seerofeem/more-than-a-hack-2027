@@ -69,3 +69,11 @@ SWITCH_D = 15.0
 # Clean-up after Viterbi.
 MIN_SPELL_S = 0.5          # shorter H/A spells are absorbed by what came before
 MIN_DEAD_S = 1.0           # shorter D gaps inside one team's spell are closed
+
+# --- video ball (optional, solution/video_ball.py) -----------------------------------------------
+# Where the ATD has no ball, use the video detector's ball if its confidence is at least this.
+# Chosen label-free with solution/video_check.py: the lowest threshold at which detections agree
+# with the ATD ball within 5 m on at least ~85% of the frames where both exist.
+VIDEO_MIN_CONF = 0.20
+# Video-filled frames count for a bit less than tracked ones in the control evidence.
+VIDEO_WEIGHT = 0.7

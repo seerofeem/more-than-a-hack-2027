@@ -1,0 +1,6 @@
+# Optional video ball detector (solution/video_ball.py). Not needed for the submission.
+# Installed with: pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+-r requirements-solution.txt
+torch==2.6.0
+ultralytics==8.4.213
+opencv-python==5.0.0.93

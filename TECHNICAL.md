@@ -30,8 +30,9 @@ can't overfit the 17 public possessions.
 | tactical ATD (players + ball) | yes | main signal: distances, ball speed, ball position vs lines, player speeds |
 | ATD metadata XML | yes | which track slot belongs to which team (first team = home) |
 | Smart Tagging | yes, weakly | team-tagged phases, set pieces, kick-offs, goals (see 3.3) |
-| homography | no | ATD is already in pitch coordinates; it would only matter for reading the video |
-| tactical / broadcast video | no | not needed by the tracking-only approach; could recover ball positions where ATD loses it (future work) |
+| homography | in the video experiment only | maps video detections to pitch coordinates and places the crops (section 5b) |
+| tactical video | tried, dropped from the submission | ball detector to fill ATD gaps (section 5b) |
+| broadcast video | no | not synchronised to tactical |
 | broadcast ATD | no | not synchronised to tactical; mapping it back is a project on its own |
 
 ## 3. Evidence and possession rules
@@ -110,10 +111,38 @@ Run once on the delivered data, with no parameter changed afterwards:
 - The Smart Tagging signs were resolved without labels. Every "defending in ..." code and
   "defensive transition" came out as naming the defending side; every attacking code came out as
   naming the side in possession. This is what the code names say, so it confirms the team mapping.
-- Public 5-minute window, scored once as a correctness check: macroF1 0.68, spellF1 0.42, and 21
+- Public 5-minute window, used as a correctness check: macroF1 0.68, spellF1 0.42, and 21
   predicted possessions against 17 true. The published floor `baseline_smooth50` scores 0.62 / 0.33
   on the same window. With 17 possessions this window cannot rank anything; it only shows the
   labels mean what we think.
+
+### 5b. Video ball detection: tried and dropped
+
+`solution/video_ball.py` is optional and is not used by the submission.
+- **Detector:** a public pretrained detector, Ultralytics `yolo11m.pt` (COCO class "sports ball"), with no
+  fine-tuning.
+- **Frames:** it ran on all 64,643 graded frames where the ATD has no ball, plus every 10th frame where it
+  does (9,422 frames, for checking).
+- **Crops:** it looks at a 640x640 full-resolution crop centred on the expected ball position. That
+  position is interpolated from the ATD ball, or taken from the nearest players' centroid in long gaps,
+  and projected into the image with the homography. Detections are mapped back to the pitch with the
+  inverse homography.
+- **Threshold, chosen without labels** (`solution/video_check.py`): the lowest confidence at which video
+  detections agree with the ATD ball within 5 m on at least 85% of frames where both exist. That is
+  conf >= 0.20, at 85.8% agreement and a median distance of 0.85 m. At that threshold it fills the ball
+  on 13,379 of the 64,643 gap frames (20.7%).
+- **Why it was dropped:**
+  1. *Reproducibility.* The submission must be regenerated exactly. FP16 GPU inference thresholded at
+     0.20 cannot be guaranteed byte-identical on other hardware, while the tracking-only path is pure
+     numpy and reproduces exactly.
+  2. *A side effect.* Filling ball gaps also broke up the "ball lost at a line" dead-ball cue
+     (`edge_missing` fell from 18.7% to 11.7% of graded frames), and that interaction is untested.
+  3. *No evidence it helps.* On the public window the two variants differ by about one possession
+     (spellF1 0.42 vs 0.40), which is noise. Choosing on that window is not allowed, so it did not decide
+     anything.
+
+  Run it with `python -m solution.video_ball`, then `python -m solution.run --video`. The dependencies
+  are in `requirements-video.txt`.
 
 ## 6. Limitations and future work
 

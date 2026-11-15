@@ -28,7 +28,24 @@ def graded_blocks(game=GAME):
     return [(first, last + 1) for _, first, last in half_video_blocks(game)]
 
 
-def predict(data_dir=None, game=GAME, verbose=True):
+def fill_from_video(ball, data_dir=None, verbose=True):
+    """Fill ATD ball gaps with confident video detections. (ball, from_video mask)."""
+    from . import video_ball
+    path = video_ball.cache_path(data_dir=data_dir)
+    if not os.path.isfile(path):
+        raise SystemExit("no video detections at {} -- run: python -m solution.video_ball"
+                         .format(path))
+    with np.load(path) as z:
+        use = np.isnan(ball[:, 0]) & z["processed"] & (z["conf"] >= P.VIDEO_MIN_CONF)
+        ball = ball.copy()
+        ball[use, 0] = z["x"][use]
+        ball[use, 1] = z["y"][use]
+    if verbose:
+        print("video filled the ball on {} frames".format(int(use.sum())))
+    return ball, use
+
+
+def predict(data_dir=None, game=GAME, verbose=True, video=False):
     meta, raw, tags_path = require(["atd_meta", "atd_raw", "smart_tagging"], game, data_dir)
     n_frames = source_frames("tactical", game)
     fps = GAMES[game]["fps"]
@@ -38,7 +55,12 @@ def predict(data_dir=None, game=GAME, verbose=True):
                                    cache_dir=os.path.join(os.path.dirname(os.path.dirname(meta)),
                                                           "cache"),
                                    verbose=verbose)
+    from_video = None
+    if video:
+        ball, from_video = fill_from_video(ball, data_dir, verbose)
     feat = features.compute(players, ball, team, GAMES[game]["pitch"], fps)
+    if from_video is not None:
+        feat["from_video"] = from_video
     events = tagging.load(tags_path, fps)
     scores, diag = evidence.build(feat, events, blocks, fps)
     labels = segment.label(scores, blocks, n_frames)
@@ -102,11 +124,13 @@ def main(argv=None):
     parser.add_argument("--data-dir", default=None,
                         help="data bundle root (default: ./data or $MTAH_DATA_DIR)")
     parser.add_argument("--out-dir", default=os.path.join(ROOT, "submissions"))
+    parser.add_argument("--video", action="store_true",
+                        help="fill ATD ball gaps with video detections (run solution.video_ball first)")
     parser.add_argument("--no-copy", action="store_true",
                         help="do not copy the file into evaluation/results/")
     args = parser.parse_args(argv)
 
-    labels = predict(args.data_dir)
+    labels = predict(args.data_dir, video=args.video)
     path = write(os.path.join(args.out_dir, "{}.csv".format(args.team)), labels)
     validate(path, source_frames("tactical"))
     print("wrote and validated {}".format(os.path.relpath(path, ROOT)))

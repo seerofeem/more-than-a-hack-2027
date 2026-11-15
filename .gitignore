@@ -68,3 +68,6 @@ env/
 *.zip
 submissions/
 /More Than A Hack 2027*/
+
+# Downloaded detector weights
+*.pt

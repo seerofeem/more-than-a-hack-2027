@@ -24,6 +24,8 @@ def control_term(feat):
     flying = np.nan_to_num(feat["ball_speed"], nan=0.0) > P.BALL_FLIGHT_SPEED_MS
     weight = np.where(flying, weight * P.FLIGHT_WEIGHT, weight)
     weight = np.where(feat["out_of_bounds"], 0.0, weight)  # a thrower out of play is not control
+    if "from_video" in feat:
+        weight = np.where(feat["from_video"], weight * P.VIDEO_WEIGHT, weight)
     return P.K_CONTROL * weight * gap
 
 
